@@ -39,6 +39,7 @@ var runCommand = cli.Command{
 			cmdArray = append(cmdArray, arg)
 		}
 		tty := context.Bool("ti")
+
 		resConf := &subsystems.ResourceConfig{
 			MemoryLimit: context.String("m"),
 			CpuSet: context.String("cpuset"),
@@ -46,6 +47,7 @@ var runCommand = cli.Command{
 		}
 
 		Run(tty, cmdArray, resConf)
+
 		return nil
 	},
 }
