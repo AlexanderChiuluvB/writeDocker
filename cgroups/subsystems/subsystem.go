@@ -6,6 +6,8 @@ type ResourceConfig struct {
 	CpuSet      string
 }
 
+//Subsystem 接口,每个Subsystem可以实现下面四个接口:
+//cgroup抽象为path,因为cgroup在hierarchy的路径便是虚拟文件系统中的虚拟路径
 type Subsystem interface {
 	Name() string
 	Set(path string, res *ResourceConfig) error
@@ -20,3 +22,6 @@ var (
 		&CpuSubSystem{},
 	}
 )
+
+
+
