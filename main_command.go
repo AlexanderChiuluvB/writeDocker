@@ -27,7 +27,6 @@ var runCommand = cli.Command{
 		}
 		cmd := context.Args().Get(0)
 		tty := context.Bool("ti")
-		//资源限制
 		Run(tty, cmd)
 		return nil
 	},
