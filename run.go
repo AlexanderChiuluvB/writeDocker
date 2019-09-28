@@ -4,28 +4,25 @@ import (
 	"./container"
 	"github.com/Sirupsen/logrus"
 	"os"
-	"strings"
 )
 
-func Run(tty bool, commandArray []string){
+func Run(tty bool, command string){
 
-	parent, writePipe := container.NewParentProcess(tty)
+	parent:= container.NewParentProcess(tty, command)
 	if parent == nil {
 		logrus.Errorf("创建新的进程失败")
 	}
 
 	if err := parent.Start();err != nil {
+		/*
+		会调用前面创建的command的进程
+		1.首先clone出来一个namespace隔离的进程
+		2.在子进程中,调用/proc/self/exe 也就是自己,发送init参数
+		3.调用我们init方法,初始化容器的资源
+		 */
 		logrus.Error(err)
 	}
-
-	sendInitCommand(commandArray, writePipe)
 	parent.Wait()
+	os.Exit(-1)
 }
 
-func sendInitCommand(commandArray []string, writePipe *os.File) {
-
-	command := strings.Join(commandArray, " ")
-	logrus.Infof("command all is %s", command)
-	writePipe.WriteString(command)
-	writePipe.Close()
-}

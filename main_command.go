@@ -1,6 +1,4 @@
 package main
-
-
 import (
 	"fmt"
 	"github.com/Sirupsen/logrus"
@@ -27,13 +25,10 @@ var runCommand = cli.Command{
 			return fmt.Errorf("Missing container command")
 
 		}
-		var cmdArray []string
-		for _, cmd := range context.Args() {
-			cmdArray = append(cmdArray, cmd)
-		}
+		cmd := context.Args().Get(0)
 		tty := context.Bool("ti")
 		//资源限制
-		Run(tty, cmdArray)
+		Run(tty, cmd)
 		return nil
 	},
 }
@@ -46,11 +41,12 @@ var initCommand = cli.Command{
 	/**
 
 	定义了initCommand具体操作
-
 	*/
 	Action: func(ctx *cli.Context) error {
 		logrus.Info("init start")
-		err := container.RunContainerInitProcess()
+		cmd := ctx.Args().Get(0)
+		logrus.Info("command %s", cmd)
+		err := container.RunContainerInitProcess(cmd, nil)
 		return err
 	},
 }
