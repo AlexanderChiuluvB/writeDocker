@@ -9,6 +9,7 @@ import (
 )
 
 
+//找出cgroup的挂载点
 func FindCgroupMountpoint(subsystem string) string {
 	f, err := os.Open("/proc/self/mountinfo")
 	if err != nil {
@@ -20,8 +21,11 @@ func FindCgroupMountpoint(subsystem string) string {
 	for scanner.Scan() {
 		txt := scanner.Text()
 		fields := strings.Split(txt, " ")
+		//47 33 0:42 / /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:24 - cgroup cgroup rw,memory
 		for _, opt := range strings.Split(fields[len(fields)-1], ",") {
 			if opt == subsystem {
+				//47 33 0:42 / /sys/fs/cgroup/memory rw,nosuid,nodev,noexec,relatime shared:24 - cgroup cgroup rw,memory
+				//fields[4] = /sys/fs/cgroup/memory
 				return fields[4]
 			}
 		}
@@ -32,6 +36,7 @@ func FindCgroupMountpoint(subsystem string) string {
 
 	return ""
 }
+
 
 func GetCgroupPath(subsystem string, cgroupPath string, autoCreate bool) (string, error) {
 	cgroupRoot := FindCgroupMountpoint(subsystem)
