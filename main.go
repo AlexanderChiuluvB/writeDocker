@@ -15,11 +15,14 @@ func main() {
 	app.Name = "mydocker"
 	app.Usage = usage
 
+
+
 	app.Commands = []cli.Command{
 		initCommand,
 		runCommand,
 	}
 
+	//初始化日志配置
 	app.Before = func(context *cli.Context) error {
 		// Log as JSON instead of the default ASCII formatter.
 		log.SetFormatter(&log.JSONFormatter{})
