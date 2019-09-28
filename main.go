@@ -15,8 +15,6 @@ func main() {
 	app.Name = "mydocker"
 	app.Usage = usage
 
-
-
 	app.Commands = []cli.Command{
 		initCommand,
 		runCommand,
@@ -35,4 +33,3 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
