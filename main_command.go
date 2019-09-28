@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
+	"github.com/xianlubird/mydocker/cgroups/subsystems"
+	"github.com/xianlubird/mydocker/container"
 )
 
 var runCommand = cli.Command{
@@ -24,10 +27,36 @@ var runCommand = cli.Command{
 			return fmt.Errorf("Missing container command")
 
 		}
-		cmd := context.Args().Get(0)
+		var cmdArray []string
+		for _, cmd := range context.Args() {
+			cmdArray = append(cmdArray, cmd)
+		}
 		tty := context.Bool("ti")
-		Run(tty, cmd)
+		//资源限制
+		resConf := &subsystems.ResourceConfig{
+			MemoryLimit:context.String("m"),
+			CpuSet:context.String("cpuset"),
+			CpuShare:context.String("cpushare"),
+		}
+		Run(tty, cmdArray, resConf)
 		return nil
+	},
+}
+
+var initCommand = cli.Command{
+
+	Name: "init",
+	Usage: "Init container process run user's process in container. Do not call it outside",
+
+	/**
+
+	定义了initCommand具体操作
+
+	 */
+	Action: func (ctx *cli.Context)error {
+		logrus.Info("init start")
+		err := container.RunContainerInitProcess()
+		return err
 	},
 
 
