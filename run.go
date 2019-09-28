@@ -27,10 +27,14 @@ func Run(tty bool, commandArray[] string, res *subsystems.ResourceConfig){
 		log.Error(err)
 	}
 
+	//初始化subsystem实例
 	cgroupManager := cgroups.NewCgroupManager("mydocker-cgroup")
 	defer cgroupManager.Destroy()
+	//遍历调用各个subsystem实例的set方法,创建与配置不同subsystem挂载的cgroup
 	cgroupManager.Set(res)
+	//把当前容器进程ID加入到那些cgroup
 	cgroupManager.Apply(parent.Process.Pid)
+
 	sendInitCommand(commandArray, writePipe)
 	parent.Wait()
 
