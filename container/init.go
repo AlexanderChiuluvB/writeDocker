@@ -11,6 +11,8 @@ import (
 )
 
 func RunContainerInitProcess() error {
+
+	//一直阻塞等待管道传递过来的命令
 	cmdArray := readUserCommand()
 	if cmdArray == nil || len(cmdArray) == 0 {
 		return fmt.Errorf("Run container get user command error, cmdArray is nil")
@@ -20,6 +22,7 @@ func RunContainerInitProcess() error {
 	defaultMountFlags := syscall.MS_NOEXEC | syscall.MS_NOSUID | syscall.MS_NODEV
 	syscall.Mount("proc", "/proc", "proc", uintptr(defaultMountFlags), "")
 
+	//调用exec.LookPath可以在系统PATH内寻找命令的绝对路径 那么/bin/ls 就可以写为ls
 	path, err := exec.LookPath(cmdArray[0])
 	if err != nil {
 		log.Errorf("Exec loop path error %v", err)
@@ -34,6 +37,7 @@ func RunContainerInitProcess() error {
 
 
 func readUserCommand() []string {
+	//index为3的文件描述符,也就是传递进来的管道一端
 	pipe := os.NewFile(uintptr(3), "pipe")
 	msg, err := ioutil.ReadAll(pipe)
 	if err != nil {
