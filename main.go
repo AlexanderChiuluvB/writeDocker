@@ -18,6 +18,7 @@ func main() {
 	app.Commands = []cli.Command{
 		initCommand,
 		runCommand,
+		commitCommand,
 	}
 
 	//初始化日志配置

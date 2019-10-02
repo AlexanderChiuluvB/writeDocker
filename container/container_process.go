@@ -30,8 +30,8 @@ func NewParentProcess(tty bool, volume string) (*exec.Cmd, *os.File) {
 	这三个文件描述符是子进程创建的时候就默认附带着,所以外带的文件描述符会变成第四个
 	*/
 	cmd.ExtraFiles = []*os.File{readPipe}
-	mntURL := "/opt/test/mnt/"
-	rootURL := "/opt/test/"
+	mntURL := "/opt/test2/mnt/"
+	rootURL := "/opt/test2/"
 	NewWorkSpace(rootURL, mntURL, volume)
 	cmd.Dir = mntURL
 
