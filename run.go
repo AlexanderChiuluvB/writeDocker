@@ -9,9 +9,9 @@ import (
 	"strings"
 )
 
-func Run(tty bool, commandArray[] string, res *subsystems.ResourceConfig){
+func Run(tty bool, commandArray[] string, volume string, res *subsystems.ResourceConfig){
 
-	parent, writePipe := container.NewParentProcess(tty)
+	parent, writePipe := container.NewParentProcess(tty,volume )
 
 	if parent == nil {
 		log.Errorf("创建新的进程失败")
@@ -37,7 +37,9 @@ func Run(tty bool, commandArray[] string, res *subsystems.ResourceConfig){
 
 	sendInitCommand(commandArray, writePipe)
 	parent.Wait()
-
+	mntURL := "/opt/test2/mnt/"
+	rootURL := "/opt/test2/"
+	container.DeleteWorkSpace(rootURL, mntURL, volume)
 	os.Exit(-1)
 }
 

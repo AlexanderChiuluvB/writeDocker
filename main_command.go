@@ -1,11 +1,11 @@
 package main
 
 import (
+	"./cgroups/subsystems"
+	"./container"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
 	"github.com/urfave/cli"
-	"./container"
-	"./cgroups/subsystems"
 )
 
 var runCommand = cli.Command{
@@ -18,16 +18,20 @@ var runCommand = cli.Command{
 			Usage: "enable tty",
 		},
 		cli.StringFlag{
-			Name: "m",
+			Name:  "m",
 			Usage: "memory limit",
 		},
 		cli.StringFlag{
-			Name: "cpushare",
+			Name:  "cpushare",
 			Usage: "cpushare limit",
 		},
 		cli.StringFlag{
-			Name: "cpuset",
+			Name:  "cpuset",
 			Usage: "cpuset limit",
+		},
+		cli.StringFlag{
+			Name:  "v",
+			Usage: "volume",
 		},
 	},
 	Action: func(context *cli.Context) error {
@@ -42,11 +46,11 @@ var runCommand = cli.Command{
 
 		resConf := &subsystems.ResourceConfig{
 			MemoryLimit: context.String("m"),
-			CpuSet: context.String("cpuset"),
-			CpuShare:context.String("cpushare"),
+			CpuSet:      context.String("cpuset"),
+			CpuShare:    context.String("cpushare"),
 		}
-
-		Run(tty, cmdArray, resConf)
+		volume := context.String("v")
+		Run(tty, cmdArray, volume, resConf)
 
 		return nil
 	},
@@ -60,4 +64,20 @@ var initCommand = cli.Command{
 		err := container.RunContainerInitProcess()
 		return err
 	},
+}
+
+var commitCommand = cli.Command{
+
+	Name:  "commit",
+	Usage: "commit a container into image",
+	Action: func(context *cli.Context) error {
+
+		if (len(context.Args()) < 1) {
+			return fmt.Errorf("Missing container name")
+		}
+		imageName := context.Args().Get(0)
+		commitContainer(imageName)
+		return nil
+	},
+
 }
