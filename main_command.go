@@ -21,6 +21,10 @@ var runCommand = cli.Command{
 			Name:  "m",
 			Usage: "memory limit",
 		},
+		cli.BoolFlag{
+			Name:  "d",
+			Usage: "detach container",
+		},
 		cli.StringFlag{
 			Name:  "cpushare",
 			Usage: "cpushare limit",
@@ -43,13 +47,20 @@ var runCommand = cli.Command{
 			cmdArray = append(cmdArray, arg)
 		}
 		tty := context.Bool("ti")
+		detach := context.Bool("d")
+		volume := context.String("v")
+
+		if tty && detach {
+			return fmt.Errorf("ti and d parameter cannot both provided")
+		}
 
 		resConf := &subsystems.ResourceConfig{
 			MemoryLimit: context.String("m"),
 			CpuSet:      context.String("cpuset"),
 			CpuShare:    context.String("cpushare"),
 		}
-		volume := context.String("v")
+
+		log.Infof("CreateTTy %v", tty)
 		Run(tty, cmdArray, volume, resConf)
 
 		return nil
