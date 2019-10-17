@@ -1,11 +1,11 @@
 package network
 
 import (
+	"../container"
 	"encoding/json"
 	"fmt"
 	"github.com/Sirupsen/logrus"
 	"github.com/vishvananda/netlink"
-	"../container"
 	"net"
 	"os"
 	"path"
@@ -44,7 +44,10 @@ type NetworkDriver interface {
 }
 
 func CreateNetwork(driver, subnet, name string) error {
+
+	// ParseCIDR能把网段的字符串转换成net.IPNet的对象
 	_, cidr, _ := net.ParseCIDR(subnet)
+
 	//通过IPAM分配网关IP,获得网段第一个IP作为网关的IP
 	gatewayIp, err := ipAllocator.Allocate(cidr)
 	if err != nil {
@@ -54,9 +57,10 @@ func CreateNetwork(driver, subnet, name string) error {
 
 	//调用指定网络驱动创建网络
 	nw, err := drivers[driver].Create(cidr.String(), name)
-	if err !=nil{
+	if err != nil {
 		return err
 	}
+	//把网络信息持久化到文件系统中
 	return nw.dump(defaultNetworkPath)
 
 }
@@ -65,7 +69,6 @@ func Init() error {
 
 	var bridgeDriver = BridgeNetworkDriver{}
 	drivers[bridgeDriver.Name()] = &bridgeDriver
-
 
 	//创建网络的配置路径
 	if _, err := os.Stat(defaultNetworkPath); err != nil {
@@ -95,13 +98,14 @@ func Init() error {
 		}
 
 		networks[nwName] = nw
+
 		return nil
 	})
-
 
 }
 
 func (nw *Network) dump(dumpPath string) error {
+	//把网络配置信息
 	if _, err := os.Stat(dumpPath); err != nil {
 		if os.IsNotExist(err) {
 			os.MkdirAll(dumpPath, 0644)
@@ -111,13 +115,14 @@ func (nw *Network) dump(dumpPath string) error {
 	}
 
 	nwPath := path.Join(dumpPath, nw.Name)
-	nwFile, err := os.OpenFile(nwPath, os.O_TRUNC | os.O_WRONLY | os.O_CREATE, 0644)
+	nwFile, err := os.OpenFile(nwPath, os.O_TRUNC|os.O_WRONLY|os.O_CREATE, 0644)
 	if err != nil {
 		logrus.Errorf("error：", err)
 		return err
 	}
 	defer nwFile.Close()
 
+	//把网络对象序列化成json字符串存储
 	nwJson, err := json.Marshal(nw)
 	if err != nil {
 		logrus.Errorf("error：", err)
@@ -138,12 +143,14 @@ func (nw *Network) load(dumpPath string) error {
 	if err != nil {
 		return err
 	}
+
+	//从配置文件读取网络的配置json字符串
 	nwJson := make([]byte, 2000)
 	n, err := nwConfigFile.Read(nwJson)
 	if err != nil {
 		return err
 	}
-
+	//从json字符串反序列化出网络
 	err = json.Unmarshal(nwJson[:n], nw)
 	if err != nil {
 		logrus.Errorf("Error load nw info", err)
@@ -153,6 +160,7 @@ func (nw *Network) load(dumpPath string) error {
 }
 
 func Connect(networkName string, cinfo *container.ContainerInfo) error {
+
 	network, ok := networks[networkName]
 	if !ok {
 		return fmt.Errorf("No Such Network: %s", networkName)
@@ -166,9 +174,9 @@ func Connect(networkName string, cinfo *container.ContainerInfo) error {
 
 	// 创建网络端点
 	ep := &Endpoint{
-		ID: fmt.Sprintf("%s-%s", cinfo.Id, networkName),
-		IPAddress: ip,
-		Network: network,
+		ID:          fmt.Sprintf("%s-%s", cinfo.Id, networkName),
+		IPAddress:   ip,
+		Network:     network,
 		PortMapping: cinfo.PortMapping,
 	}
 	// 调用网络驱动挂载和配置网络端点
@@ -180,6 +188,7 @@ func Connect(networkName string, cinfo *container.ContainerInfo) error {
 		return err
 	}
 
+	//配置容器到宿主机的端口映射
 	return configPortMapping(ep, cinfo)
 }
 
@@ -187,6 +196,7 @@ func Disconnect(networkName string, cinfo *container.ContainerInfo) error {
 	return nil
 }
 
+//对应docker network list 命令
 func ListNetwork() {
 	w := tabwriter.NewWriter(os.Stdout, 12, 1, 3, ' ', 0)
 	fmt.Fprint(w, "NAME\tIpRange\tDriver\n")
@@ -208,11 +218,11 @@ func DeleteNetwork(networkName string) error {
 	if !ok {
 		return fmt.Errorf("No Such Network: %s", networkName)
 	}
-
+	//调用IPAM实例ipAllocator,释放网络网关的IP
 	if err := ipAllocator.Release(nw.IpRange, &nw.IpRange.IP); err != nil {
 		return fmt.Errorf("Error Remove Network gateway ip: %s", err)
 	}
-
+	//调用网络驱动删除网络创建的设备与配置
 	if err := drivers[nw.Driver].Delete(*nw); err != nil {
 		return fmt.Errorf("Error Remove Network DriverError: %s", err)
 	}
